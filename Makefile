@@ -31,12 +31,12 @@ LEX?=		lex
 
 OBJS=	aliases_parse.o aliases_scan.o base64.o conf.o crypto.o
 OBJS+=	dma.o dns.o local.o mail.o net.o spool.o util.o
-OBJS+=	dfcompat.o
+OBJS+=	dfcompat.o errlog.o lock.o
 
-all: dma
+all: dma dma-create-mbox
 
 clean:
-	-rm -f .depend dma *.[do]
+	-rm -f .depend dma dma-create-mbox *.[do]
 	-rm -f aliases_parse.[ch] aliases_scan.c
  
 install: all
@@ -62,4 +62,6 @@ aliases_scan.c: aliases_scan.l
 
 dma: ${OBJS}
 	${CC} ${LDFLAGS} ${LDADD} -o $@ $^
-
+	
+dma-create-mbox: errlog.o lock.o dma-create-mbox.o
+	${CC} ${LDFLAGS} -o $@ $^

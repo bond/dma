@@ -32,15 +32,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/file.h>
-
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <setjmp.h>
-#include <signal.h>
 #include <stdio.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -109,55 +104,6 @@ setlogident(const char *fmt, ...)
 	openlog(tag != NULL ? tag : logident_base, 0, LOG_MAIL);
 }
 
-void
-errlog(int exitcode, const char *fmt, ...)
-{
-	int oerrno = errno;
-	va_list ap;
-	char *outs = NULL;
-
-	if (fmt != NULL) {
-		va_start(ap, fmt);
-		if (vasprintf(&outs, fmt, ap) == -1)
-			outs = NULL;
-		va_end(ap);
-	}
-
-	if (outs != NULL) {
-		syslog(LOG_ERR, "%s: %m", outs);
-		fprintf(stderr, "%s: %s: %s\n", getprogname(), outs, strerror(oerrno));
-	} else {
-		syslog(LOG_ERR, "%m");
-		fprintf(stderr, "%s: %s\n", getprogname(), strerror(oerrno));
-	}
-
-	exit(exitcode);
-}
-
-void
-errlogx(int exitcode, const char *fmt, ...)
-{
-	va_list ap;
-	char *outs = NULL;
-
-	if (fmt != NULL) {
-		va_start(ap, fmt);
-		if (vasprintf(&outs, fmt, ap) == -1)
-			outs = NULL;
-		va_end(ap);
-	}
-
-	if (outs != NULL) {
-		syslog(LOG_ERR, "%s", outs);
-		fprintf(stderr, "%s: %s\n", getprogname(), outs);
-	} else {
-		syslog(LOG_ERR, "Unknown error");
-		fprintf(stderr, "%s: Unknown error\n", getprogname());
-	}
-
-	exit(exitcode);
-}
-
 static const char *
 check_username(const char *name, uid_t ckuid)
 {
@@ -211,82 +157,6 @@ deltmp(void)
 	SLIST_FOREACH(t, &tmpfs, next) {
 		unlink(t->str);
 	}
-}
-
-static sigjmp_buf sigbuf;
-static int sigbuf_valid;
-
-static void
-sigalrm_handler(int signo)
-{
-	(void)signo;	/* so that gcc doesn't complain */
-	if (sigbuf_valid)
-		siglongjmp(sigbuf, 1);
-}
-
-int
-do_timeout(int timeout, int dojmp)
-{
-	struct sigaction act;
-	int ret = 0;
-
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-
-	if (timeout) {
-		act.sa_handler = sigalrm_handler;
-		if (sigaction(SIGALRM, &act, NULL) != 0)
-			syslog(LOG_WARNING, "can not set signal handler: %m");
-		if (dojmp) {
-			ret = sigsetjmp(sigbuf, 1);
-			if (ret)
-				goto disable;
-			/* else just programmed */
-			sigbuf_valid = 1;
-		}
-
-		alarm(timeout);
-	} else {
-disable:
-		alarm(0);
-
-		act.sa_handler = SIG_IGN;
-		if (sigaction(SIGALRM, &act, NULL) != 0)
-			syslog(LOG_WARNING, "can not remove signal handler: %m");
-		sigbuf_valid = 0;
-	}
-
-	return (ret);
-}
-
-int
-open_locked(const char *fname, int flags, ...)
-{
-	int mode = 0;
-
-	if (flags & O_CREAT) {
-		va_list ap;
-		va_start(ap, flags);
-		mode = va_arg(ap, int);
-		va_end(ap);
-	}
-
-#ifndef O_EXLOCK
-	int fd, save_errno;
-
-	fd = open(fname, flags, mode);
-	if (fd < 0)
-		return(fd);
-	if (flock(fd, LOCK_EX|((flags & O_NONBLOCK)? LOCK_NB: 0)) < 0) {
-		save_errno = errno;
-		close(fd);
-		errno = save_errno;
-		return(-1);
-	}
-	return(fd);
-#else
-	return(open(fname, flags|O_EXLOCK, mode));
-#endif
 }
 
 char *
