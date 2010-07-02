@@ -46,8 +46,8 @@ install: all
 	${INSTALL} -m 0644 dma.8 ${DESTDIR}${MAN}/man8/
 	${INSTALL} -d -m 2775 -o root -g mail ${DESTDIR}${DMASPOOL}
 	${INSTALL} -d -m 2775 -o root -g mail ${DESTDIR}${VARMAIL}
-	-${CHGRP} mail ${DESTDIR}${VARMAIL}/*
-	-${CHMOD} g+w ${DESTDIR}${VARMAIL}/*
+	-${CHGRP} -R mail ${DESTDIR}${VARMAIL}/
+	-${CHMOD} -R g+w ${DESTDIR}${VARMAIL}/
 
 aliases_parse.c: aliases_parse.y
 	${YACC} -d -o aliases_parse.c aliases_parse.y
@@ -61,4 +61,5 @@ aliases_scan.c: aliases_scan.l
 	${CC} ${CFLAGS} ${CPPFLAGS} -include dfcompat.h -o $@ -c $<
 
 dma: ${OBJS}
-	${CC} ${LDFLAGS} ${LDADD} -o $@ ${OBJS}
+	${CC} ${LDFLAGS} ${LDADD} -o $@ $^
+

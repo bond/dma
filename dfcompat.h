@@ -17,6 +17,13 @@ size_t strlcpy(char *, const char *, size_t);
 void *reallocf(void *, size_t);
 #endif
 
+#ifdef __APPLE__ & __MACH__
+#define HAVE_GETPROGNAME 1
+#define st_atim st_atimespec
+#define st_mtim st_mtimespec
+#define st_ctim st_ctimespec
+#endif
+
 #ifndef HAVE_GETPROGNAME
 const char *getprogname(void);
 #endif

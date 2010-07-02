@@ -40,6 +40,9 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <arpa/nameser.h>
+#ifdef __APPLE__ & __MACH__
+#include <arpa/nameser_compat.h>
+#endif
 #include <arpa/inet.h>
 #include <openssl/ssl.h>
 #include <netdb.h>
