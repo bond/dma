@@ -1,0 +1,4 @@
+*.o
+dma
+aliases_parse.[ch]
+aliases_scan.c
