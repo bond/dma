@@ -43,6 +43,7 @@ install: all
 	${INSTALL} -d ${DESTDIR}${SBIN} ${DESTDIR}${CONFDIR}
 	${INSTALL} -d ${DESTDIR}${MAN}/man8
 	${INSTALL} -m 2755 -o root -g mail dma ${DESTDIR}${SBIN}
+	${INSTALL} -m 4755 -o root -g mail dma-create-mbox ${DESTDIR}${SBIN}
 	${INSTALL} -m 0644 dma.8 ${DESTDIR}${MAN}/man8/
 	${INSTALL} -d -m 2775 -o root -g mail ${DESTDIR}${DMASPOOL}
 	${INSTALL} -d -m 2775 -o root -g mail ${DESTDIR}${VARMAIL}
@@ -62,6 +63,6 @@ aliases_scan.c: aliases_scan.l
 
 dma: ${OBJS}
 	${CC} ${LDFLAGS} ${LDADD} -o $@ $^
-	
+
 dma-create-mbox: errlog.o lock.o dma-create-mbox.o
 	${CC} ${LDFLAGS} -o $@ $^
