@@ -1,4 +1,5 @@
 *.o
 dma
+dma-create-mbox
 aliases_parse.[ch]
 aliases_scan.c
