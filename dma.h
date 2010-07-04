@@ -146,6 +146,7 @@ extern struct strlist tmpfs;
 extern struct authusers authusers;
 extern const char *username;
 extern const char *logident_base;
+extern char *dma_create_mbox;
 
 extern char neterr[BUF_SIZE];
 

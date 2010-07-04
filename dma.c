@@ -66,6 +66,7 @@ struct strlist tmpfs = SLIST_HEAD_INITIALIZER(tmpfs);
 struct authusers authusers = LIST_HEAD_INITIALIZER(authusers);
 const char *username;
 const char *logident_base;
+char *dma_create_mbox;
 
 static int daemonize = 1;
 
@@ -367,6 +368,7 @@ main(int argc, char **argv)
 {
 	struct sigaction act;
 	char *sender = NULL;
+	char *p = NULL;
 	struct queue queue;
 	int i, ch;
 	int nodot = 0, doqueue = 0, showq = 0, queue_only = 0;
@@ -384,6 +386,27 @@ main(int argc, char **argv)
 		if (argc != 0)
 			errx(1, "invalid arguments");
 		goto skipopts;
+	}
+
+	/* To ensure the right dma-create-mbox is executed, we execute the one
+		that is in the same sbin-folder as 'dma' it self.
+
+		Copy out the prefix of argv[0] */
+
+	if ((p = strrchr(argv[0], '/')) == NULL)
+		errlogx(ENOMEM, "Cannot allocate memory? (no / in path?)");
+
+	if ((p - argv[0]) > 0) {
+		size_t len = (p - argv[0]) + 1;
+		dma_create_mbox = malloc(len + strlen("dma-create-mbox") + 1);
+
+		if (dma_create_mbox == NULL)
+			errlogx(ENOMEM, "Cannot allocate memory? (malloc() failed)");
+
+		dma_create_mbox[len + strlen("dma-create-mbox")] = '\0';
+		memcpy(dma_create_mbox, argv[0], len);
+		memcpy(dma_create_mbox + len, "dma-create-mbox", strlen("dma-create-mbox"));
+
 	}
 
 	opterr = 0;
