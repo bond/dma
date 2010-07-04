@@ -26,7 +26,6 @@ main(int argc, char **argv)
 	if(argv[1] == NULL)
 		errlogx(ENOENT, "No username given");
 
-
 	/* check username is valid */
 	errno = 0;
 	pwent = getpwnam(argv[1]);
@@ -36,7 +35,7 @@ main(int argc, char **argv)
 		else
 			errlogx(errno, "Unable to lookup username '%s': errno %d", argv[1], errno);
 	}
-	
+
 	/* build mbox-path */
 	error = snprintf(mbox, sizeof(mbox), "%s/%s", _PATH_MAILDIR, pwent->pw_name);
 	if (error < 0 || (size_t)error >= sizeof(mbox))
