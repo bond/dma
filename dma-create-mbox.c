@@ -56,27 +56,28 @@ main(int argc, char **argv)
 				else
 					errlogx(errno, "Unable to lookup group '%s': errno %d", mbox_group, errno);
 			}
-		
+
 			/* create mbox */
 			fh = open_locked(mbox, O_WRONLY|O_APPEND|O_CREAT, 0660);
 			if (fh < 0) {
 				int e = errno;
 
 				do_timeout(0, 0);
-				if (e == EINTR) {
-					syslog(LOG_NOTICE, "dma-create-mbox: can not lock `%s'", mbox);
-					return (ENOLCK);
-				} else {
-					syslog(LOG_NOTICE, "dma-create-mbox: can not open `%s': %m", mbox);
-					return (e);
+				if (e == EINTR)
+					errlogx(ENOLOCK, "Unable to lock mbox: '%s'", mbox);
+				else
+					errlogx(e, "Unable to open mbox: '%s'", mbox)
 				}
 			}
 			/* set correct perms */
 			if(fchown(fh, pwent->pw_uid, grent->gr_gid) == -1)
 				errlogx(errno, "Unable to chown mbox-file %s, errno: %d (%s)", mbox, errno, strerror(errno));
+
 			if(fchmod(fh, (mode_t)0660) == -1)
 				errlogx(errno, "Unable to chmod mbox-file %s, errno: %d (%s)", mbox, errno, strerror(errno));
+
 			break;
+
 		default:
 			errx(errno, "Unable to check if mbox (%s) exists: %s", mbox, strerror(errno));
 	}
