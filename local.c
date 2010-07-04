@@ -50,12 +50,12 @@ deliver_local(struct qitem *it, const char **errmsg)
 
 					if(args[0] == NULL || args[1] == NULL)  {
 						syslog(LOG_NOTICE, "Unable to allocate memory (strdup): %m");
-						return (ENOMEM);
+						return (1);
 					}
 
 					execve(dma_create_mbox, args, NULL);
 					syslog(LOG_NOTICE, "Unable to execve(dma-create-mbox):%m");
-					return (errno);
+					return (1);
 
 				} else if (pid < 0) {
 					/* error */
