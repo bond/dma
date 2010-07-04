@@ -7,6 +7,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "dma.h"
 
@@ -17,17 +18,58 @@ deliver_local(struct qitem *it, const char **errmsg)
 	char line[1000];
 	const char *sender;
 	const char *newline = "\n";
+	char *args[2];
 	size_t linelen;
+	pid_t pid;
 	int mbox;
 	int error;
 	int hadnl = 0;
 	off_t mboxlen;
 	time_t now = time(NULL);
+	struct stat st;
 
 	error = snprintf(fn, sizeof(fn), "%s/%s", _PATH_MAILDIR, it->addr);
 	if (error < 0 || (size_t)error >= sizeof(fn)) {
 		syslog(LOG_NOTICE, "local delivery deferred: %m");
 		return (1);
+	}
+
+	/* If mbox dosn't exist, we spawn suid-program to create it */
+	if (stat(fn, &st) == -1) {
+		switch(errno) {
+			case ENOENT:
+				syslog(LOG_INFO, "spawning dma-create-mbox: %s", dma_create_mbox);
+				pid = fork();
+				if (pid == 0) {
+					/* child */
+
+					/* build args for dma-create-mbox */
+					args[0] = strdup("dma-create-mbox");
+					args[1] = strdup(it->addr);
+					args[2] = NULL;
+
+					if(args[0] == NULL || args[1] == NULL)  {
+						syslog(LOG_NOTICE, "Unable to allocate memory (strdup): %m");
+						return (ENOMEM);
+					}
+
+					execve(dma_create_mbox, args, NULL);
+					syslog(LOG_NOTICE, "Unable to execve(dma-create-mbox):%m");
+					return (errno);
+
+				} else if (pid < 0) {
+					/* error */
+					syslog(LOG_NOTICE, "local delivery deferred: Unable to fork() for dma-create-mbox: %m");
+					return (1);
+				}
+				waitpid(pid, &error, 0);
+				break;
+			case EACCES:
+				syslog(LOG_NOTICE, "Local delivery deferred: Unable to open `%s': %m", fn);
+				return (1);
+			default:
+				syslog(LOG_NOTICE, "Unable to stat `%s'", fn);
+		}
 	}
 
 	/* wait for a maximum of 100s to get the lock to the file */
