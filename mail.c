@@ -413,10 +413,10 @@ readmail(struct queue *queue, int nodot, int recp_from_header)
 				} else if (!had_messagid) {
 					/* XXX msgid, assign earlier and log? */
 					had_messagid = 1;
-					snprintf(line, sizeof(line), "Message-Id: <%"PRIxMAX".%s.%"PRIxMAX"@%s>\n",
+					snprintf(line, sizeof(line), "Message-Id: <%jx.%s.%jx@%s>\n",
 						 (uintmax_t)time(NULL),
 						 queue->id,
-						 random(),
+						 (uintmax_t)random(),
 						 hostname());
 				} else if (!had_from) {
 					had_from = 1;
