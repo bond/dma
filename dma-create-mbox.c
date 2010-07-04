@@ -22,6 +22,8 @@ main(int argc, char **argv)
 	char mbox[PATH_MAX+1];
 	char *mbox_group = "mail";
 
+	openlog("dma-create-mbox", 0, LOG_MAIL);
+
 	bzero(mbox, sizeof(mbox));
 	if(argv[1] == NULL)
 		errlogx(ENOENT, "No username given");
@@ -44,8 +46,8 @@ main(int argc, char **argv)
 
 	/* check mbox-path exists */
 	if (stat(mbox, &st) == 0)
-		return (0);
-		
+		errlogx(EEXIST, "Unable to create mbox for user '%s', mbox '%s' exists!", pwent->pw_name, mbox);
+
 	switch(errno) {
 		case ENOENT:
 			/* lookup gid */
@@ -64,10 +66,9 @@ main(int argc, char **argv)
 
 				do_timeout(0, 0);
 				if (e == EINTR)
-					errlogx(ENOLOCK, "Unable to lock mbox: '%s'", mbox);
+					errlogx(ENOLCK, "Unable to lock mbox: '%s'", mbox);
 				else
-					errlogx(e, "Unable to open mbox: '%s'", mbox)
-				}
+					errlogx(e, "Unable to open mbox: '%s'", mbox);
 			}
 			/* set correct perms */
 			if(fchown(fh, pwent->pw_uid, grent->gr_gid) == -1)
@@ -81,6 +82,6 @@ main(int argc, char **argv)
 		default:
 			errx(errno, "Unable to check if mbox (%s) exists: %s", mbox, strerror(errno));
 	}
-
+	syslog(LOG_INFO, "mbox %s created successfully", mbox);
 	return (0);
 }
