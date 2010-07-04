@@ -54,6 +54,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "dma.h"
 

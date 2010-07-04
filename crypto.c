@@ -41,6 +41,7 @@
 #include <openssl/rand.h>
 
 #include <syslog.h>
+#include <strings.h>
 
 #include "dma.h"
 
